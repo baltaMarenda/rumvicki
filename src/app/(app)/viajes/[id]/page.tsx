@@ -8,7 +8,7 @@ import { estaVerificado, promedio, requerirUsuario } from "@/lib/dal";
 import { esFuturo, formatFecha, formatHora } from "@/lib/fechas";
 import { desgloseParte } from "@/lib/pricing";
 import { PriceSimulator } from "@/components/price-simulator";
-import { PaymentSheet } from "@/components/payment-sheet";
+import { ReservaSheet } from "@/components/reserva-sheet";
 import { RouteLine } from "@/components/trip-card";
 import { Alerta, Avatar, Badge, ButtonLink, Card, PageHeader, PageSkeleton, SectionTitle, Stars } from "@/components/ui";
 
@@ -105,7 +105,7 @@ async function Contenido({ params }: { params: Promise<{ id: string }> }) {
               <ShieldCheck className="size-5" aria-hidden /> Verificá tu identidad para reservar
             </ButtonLink>
           ) : (
-            <PaymentSheet tripId={trip.id} estimado={estimado} pasajerosEstimados={pasajerosEstimados} />
+            <ReservaSheet tripId={trip.id} estimado={estimado} pasajerosEstimados={pasajerosEstimados} />
           )}
           <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-gris/60">
             <Clock className="size-3.5" aria-hidden /> El precio final depende de cuántos viajen. Peajes aparte.

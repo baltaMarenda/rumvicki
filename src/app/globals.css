@@ -22,6 +22,12 @@
   --color-gris-100: #eff1f3;
   --color-gris-50: #f6f7f8;
 
+  --color-alerta: #b45309;
+  --color-alerta-50: #fff7ed;
+  --color-alerta-200: #fed7aa;
+  --color-mp: #009ee3;
+  --color-mp-700: #007eb5;
+
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
 

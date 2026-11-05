@@ -42,15 +42,25 @@ async function main() {
       { conductorId: martin, origen: "La Plata", destino: "Mar del Plata", fechaHora: enDias(-20, "08:00"), km: 370, capacidad: 3, estado: "finalizado", conductorRecibe: 0 },
       { conductorId: lucia, origen: "Tandil", destino: "La Plata", fechaHora: enDias(-12, "15:30"), km: 360, capacidad: 3, estado: "finalizado", conductorRecibe: 0 },
       { conductorId: camila, origen: "Pergamino", destino: "Luján", fechaHora: enDias(-6, "07:15"), km: 160, capacidad: 2, estado: "finalizado", conductorRecibe: 0 },
+      { conductorId: lucia, origen: "La Plata", destino: "Chascomús", fechaHora: enDias(-4, "10:00"), km: 85, capacidad: 3, estado: "finalizado", conductorRecibe: 0 },
+      { conductorId: martin, origen: "Quilmes", destino: "La Plata", fechaHora: enDias(-1, "18:30"), km: 30, capacidad: 3, estado: "finalizado", conductorRecibe: 0 },
     ])
     .returning({ id: s.trips.id });
-  const [p1, p2, p3] = pasados.map((t) => t.id);
+  const [p1, p2, p3, p4, p5] = pasados.map((t) => t.id);
+  const pago = (dias: number, medio = "dinero_en_cuenta") => ({ pagadoAt: new Date(Date.now() + dias * dia), medioPago: medio });
+  const tarde = (dias: number) => ({ estado: "cancelada" as const, canceladaAt: new Date(Date.now() + dias * dia), cancelacionTardia: true });
   await db.insert(s.reservations).values([
-    { tripId: p1, pasajeroId: sofia, estado: "finalizada", montoPagado: 37000, comision: 3700, tarjetaUltimos4: "4242" },
-    { tripId: p1, pasajeroId: diego, estado: "finalizada", montoPagado: 37000, comision: 3700, tarjetaUltimos4: "1111" },
-    { tripId: p2, pasajeroId: sofia, estado: "finalizada", montoPagado: 54000, comision: 5400, tarjetaUltimos4: "4242" },
-    { tripId: p2, pasajeroId: juan, estado: "finalizada", montoPagado: 54000, comision: 5400, tarjetaUltimos4: "5555" },
-    { tripId: p3, pasajeroId: diego, estado: "finalizada", montoPagado: 24000, comision: 2400, tarjetaUltimos4: "1111" },
+    { tripId: p1, pasajeroId: sofia, estado: "finalizada", montoPagado: 37000, comision: 3700, ...pago(-20) },
+    { tripId: p1, pasajeroId: diego, estado: "finalizada", montoPagado: 37000, comision: 3700, ...pago(-20, "tarjeta_debito") },
+    { tripId: p1, pasajeroId: juan, ...tarde(-20.2) },
+    { tripId: p2, pasajeroId: sofia, estado: "finalizada", montoPagado: 54000, comision: 5400, ...pago(-12) },
+    { tripId: p2, pasajeroId: juan, estado: "finalizada", montoPagado: 54000, comision: 5400, ...pago(-12, "tarjeta_credito") },
+    { tripId: p3, pasajeroId: diego, estado: "finalizada", montoPagado: 24000, comision: 2400, ...pago(-6) },
+    { tripId: p3, pasajeroId: juan, ...tarde(-6.3) },
+    { tripId: p4, pasajeroId: juan, estado: "finalizada", montoPagado: 12750, comision: 1275, ...pago(-4) },
+    // Sofía todavía no pagó este viaje: sirve para mostrar el botón de Mercado Pago.
+    { tripId: p5, pasajeroId: sofia, estado: "finalizada", montoPagado: 4500, comision: 450 },
+    { tripId: p5, pasajeroId: juan, ...tarde(-1.2) },
   ]);
   await db.insert(s.ratings).values([
     { tripId: p1, autorId: sofia, destinatarioId: martin, estrellas: 5, rolDestinatario: "conductor" },
@@ -85,13 +95,14 @@ async function main() {
     .returning({ id: s.trips.id });
   const [f1, , f3, , f5] = futuros.map((t) => t.id);
   await db.insert(s.reservations).values([
-    { tripId: f1, pasajeroId: diego, estado: "confirmada", tarjetaUltimos4: "1111" },
-    { tripId: f1, pasajeroId: juan, estado: "pendiente", tarjetaUltimos4: "5555" },
-    { tripId: f3, pasajeroId: sofia, estado: "confirmada", tarjetaUltimos4: "4242" },
-    { tripId: f5, pasajeroId: diego, estado: "pendiente", tarjetaUltimos4: "1111" },
+    { tripId: f1, pasajeroId: diego, estado: "confirmada" },
+    // Juan canceló tarde 3 de sus últimos 5 viajes: Martín ve la alerta al revisar esta solicitud.
+    { tripId: f1, pasajeroId: juan, estado: "pendiente" },
+    { tripId: f3, pasajeroId: sofia, estado: "confirmada" },
+    { tripId: f5, pasajeroId: diego, estado: "pendiente" },
   ]);
 
-  console.log("Seed listo: 6 usuarios (contraseña yendo123), 15 viajes.");
+  console.log("Seed listo: 6 usuarios (contraseña yendo123), 17 viajes.");
 }
 
 main().catch((e) => {

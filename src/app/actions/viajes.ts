@@ -9,6 +9,7 @@ import { esLocalidad } from "@/lib/localidades";
 import { fechaHoraAR } from "@/lib/fechas";
 import { desgloseParte, liquidacionConductor } from "@/lib/pricing";
 import { premiosNuevos } from "@/lib/rewards";
+import { MAX_PASAJEROS } from "@/lib/reglas";
 import type { FormState } from "./auth";
 
 export async function publicarViaje(_: FormState, fd: FormData): Promise<FormState> {
@@ -32,8 +33,8 @@ export async function publicarViaje(_: FormState, fd: FormData): Promise<FormSta
   if (fechaHora.getTime() < Date.now()) return { error: "La salida tiene que ser en el futuro.", values };
   if (!Number.isInteger(km) || km < 5 || km > 1500)
     return { error: "Los km tienen que estar entre 5 y 1.500.", values };
-  if (!Number.isInteger(capacidad) || capacidad < 1 || capacidad > 6)
-    return { error: "La capacidad va de 1 a 6 pasajeros.", values };
+  if (!Number.isInteger(capacidad) || capacidad < 1 || capacidad > MAX_PASAJEROS)
+    return { error: `Entran hasta ${MAX_PASAJEROS} pasajeros + vos (5 integrantes).`, values };
 
   const [t] = await db
     .insert(trips)

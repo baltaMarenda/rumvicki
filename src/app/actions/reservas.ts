@@ -1,23 +1,17 @@
 "use server";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { refresh } from "next/cache";
 import { db } from "@/db";
 import { reservations, trips } from "@/db/schema";
 import { estaVerificado, requerirUsuario } from "@/lib/dal";
+import { esCancelacionTardia } from "@/lib/reglas";
 import type { FormState } from "./auth";
 
 export async function reservar(_: FormState, fd: FormData): Promise<FormState> {
   const u = await requerirUsuario();
   const tripId = Number(fd.get("tripId"));
   if (!estaVerificado(u)) redirect(`/verificacion?next=/viajes/${tripId}`);
-
-  const tarjeta = String(fd.get("tarjeta") ?? "").replace(/\s/g, "");
-  const venc = String(fd.get("vencimiento") ?? "");
-  const cvv = String(fd.get("cvv") ?? "");
-  if (!/^\d{16}$/.test(tarjeta)) return { error: "La tarjeta tiene que tener 16 números." };
-  if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(venc)) return { error: "El vencimiento va como MM/AA." };
-  if (!/^\d{3,4}$/.test(cvv)) return { error: "El código de seguridad tiene 3 o 4 números." };
 
   const [t] = await db.select().from(trips).where(eq(trips.id, tripId));
   if (!t || t.estado !== "publicado" || t.fechaHora.getTime() < Date.now())
@@ -32,16 +26,24 @@ export async function reservar(_: FormState, fd: FormData): Promise<FormState> {
   if (activas.filter((r) => r.estado === "confirmada").length >= t.capacidad)
     return { error: "El viaje ya está completo." };
 
-  await db.insert(reservations).values({ tripId: t.id, pasajeroId: u.id, tarjetaUltimos4: tarjeta.slice(-4) });
+  // El pago se hace con Mercado Pago (simulado) cuando el conductor finaliza el viaje.
+  await db.insert(reservations).values({ tripId: t.id, pasajeroId: u.id });
   redirect("/reservas?nueva=1");
 }
 
 export async function cancelarReserva(fd: FormData) {
   const u = await requerirUsuario();
   const id = Number(fd.get("reservaId"));
+  const [row] = await db
+    .select({ fechaHora: trips.fechaHora })
+    .from(reservations)
+    .innerJoin(trips, eq(trips.id, reservations.tripId))
+    .where(and(eq(reservations.id, id), eq(reservations.pasajeroId, u.id)));
+  if (!row) return refresh();
+  const ahora = new Date();
   await db
     .update(reservations)
-    .set({ estado: "cancelada" })
+    .set({ estado: "cancelada", canceladaAt: ahora, cancelacionTardia: esCancelacionTardia(row.fechaHora, ahora) })
     .where(
       and(
         eq(reservations.id, id),
@@ -50,4 +52,32 @@ export async function cancelarReserva(fd: FormData) {
       ),
     );
   refresh();
+}
+
+const MEDIOS = ["dinero_en_cuenta", "tarjeta_debito", "tarjeta_credito"] as const;
+
+/** Pago simulado con Mercado Pago. Solo se puede pagar una reserva de un viaje ya finalizado. */
+export async function pagarConMercadoPago(_: FormState, fd: FormData): Promise<FormState> {
+  const u = await requerirUsuario();
+  const id = Number(fd.get("reservaId"));
+  const medio = String(fd.get("medio") ?? "");
+  if (!MEDIOS.includes(medio as (typeof MEDIOS)[number])) return { error: "Elegí cómo querés pagar." };
+
+  // Simula la demora de la pasarela.
+  await new Promise((r) => setTimeout(r, 1200));
+  const [r] = await db
+    .update(reservations)
+    .set({ pagadoAt: new Date(), medioPago: medio })
+    .where(
+      and(
+        eq(reservations.id, id),
+        eq(reservations.pasajeroId, u.id),
+        eq(reservations.estado, "finalizada"),
+        isNull(reservations.pagadoAt),
+      ),
+    )
+    .returning({ id: reservations.id });
+  if (!r) return { error: "Esta reserva no tiene un pago pendiente." };
+  refresh();
+  return { ok: true };
 }

@@ -62,6 +62,12 @@ export const reservations = pgTable("reservations", {
   montoPagado: integer("monto_pagado"),
   comision: integer("comision"),
   usoPremio: boolean("uso_premio").notNull().default(false),
+  /** Pago simulado con Mercado Pago, se hace cuando el viaje termina. */
+  pagadoAt: timestamp("pagado_at", { withTimezone: true }),
+  medioPago: text("medio_pago"),
+  /** Solo se completa cuando el pasajero cancela (no cuando el conductor cancela el viaje). */
+  canceladaAt: timestamp("cancelada_at", { withTimezone: true }),
+  cancelacionTardia: boolean("cancelacion_tardia").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

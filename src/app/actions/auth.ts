@@ -9,7 +9,7 @@ import { cerrarSesion, crearSesion } from "@/lib/session";
 import { requerirUsuario } from "@/lib/dal";
 import { inicioSegunRol } from "@/lib/roles";
 
-export type FormState = { error?: string; values?: Record<string, string> };
+export type FormState = { error?: string; ok?: boolean; values?: Record<string, string> };
 
 export async function registrar(_: FormState, fd: FormData): Promise<FormState> {
   const nombre = String(fd.get("nombre") ?? "").trim();

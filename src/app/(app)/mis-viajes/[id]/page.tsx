@@ -1,12 +1,13 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { and, asc, eq } from "drizzle-orm";
-import { Check, Flag, Gift, ShieldCheck, Star, UserRoundX, X } from "lucide-react";
+import { and, asc, eq, inArray, ne } from "drizzle-orm";
+import { Check, CircleCheck, Clock, Flag, Gift, ShieldCheck, Star, TriangleAlert, UserRoundX, X } from "lucide-react";
 import { db } from "@/db";
 import { ratings, reservations, trips, users } from "@/db/schema";
 import { estaVerificado, promedios, requerirUsuario } from "@/lib/dal";
 import { formatFecha, formatHora } from "@/lib/fechas";
 import { formatPesos, liquidacionConductor } from "@/lib/pricing";
+import { HORAS_CANCELACION, historialCancelaciones } from "@/lib/reglas";
 import { cancelarViaje, finalizarViaje, responderSolicitud } from "@/app/actions/viajes";
 import { ConfirmButton } from "@/components/confirm-button";
 import { SubmitButton } from "@/components/submit-button";
@@ -31,6 +32,22 @@ async function Contenido({ params, searchParams }: Props) {
     .orderBy(asc(reservations.createdAt));
   const proms = await promedios(res.map((x) => x.p.id), "pasajero");
   const pendientes = res.filter((x) => x.r.estado === "pendiente");
+  const previos = pendientes.length
+    ? await db
+        .select({
+          pasajeroId: reservations.pasajeroId,
+          estado: reservations.estado,
+          canceladaAt: reservations.canceladaAt,
+          cancelacionTardia: reservations.cancelacionTardia,
+          fechaHora: trips.fechaHora,
+        })
+        .from(reservations)
+        .innerJoin(trips, eq(trips.id, reservations.tripId))
+        .where(and(inArray(reservations.pasajeroId, pendientes.map((x) => x.p.id)), ne(reservations.tripId, id)))
+    : [];
+  const cancelaciones = new Map(
+    pendientes.map((x) => [x.p.id, historialCancelaciones(previos.filter((r) => r.pasajeroId === x.p.id))]),
+  );
   const confirmados = res.filter((x) => x.r.estado === (t.estado === "finalizado" ? "finalizada" : "confirmada"));
   const [yaCalifique] = await db
     .select({ id: ratings.id })
@@ -78,7 +95,7 @@ async function Contenido({ params, searchParams }: Props) {
       <PageHeader tono="azul" back="/mis-viajes" title={`${t.origen} → ${t.destino}`} subtitle={`${formatFecha(t.fechaHora)} · ${formatHora(t.fechaHora)} hs · ${t.km} km`} />
       <div className="space-y-4 px-5 pt-5">
         {sp.publicado && <Alerta tono="verde">¡Viaje publicado! Ya aparece en las búsquedas de los pasajeros.</Alerta>}
-        {t.estado === "cancelado" && <Alerta>Cancelaste este viaje. Se liberaron los pagos de los pasajeros.</Alerta>}
+        {t.estado === "cancelado" && <Alerta>Cancelaste este viaje. Les avisamos a los pasajeros.</Alerta>}
 
         <Card>
           <RouteLine origen={t.origen} destino={t.destino} hora={formatHora(t.fechaHora)} />
@@ -108,6 +125,7 @@ async function Contenido({ params, searchParams }: Props) {
               <div className="space-y-3">
                 {pendientes.map((x) => (
                   <Persona key={x.r.id} x={x}>
+                    <AlertaCancelaciones {...(cancelaciones.get(x.p.id) ?? { tardias: 0, total: 0 })} />
                     <form action={responderSolicitud} className="mt-4 grid grid-cols-2 gap-2">
                       <input type="hidden" name="reservaId" value={x.r.id} />
                       <SubmitButton variant="blanco" name="accion" value="rechazar">
@@ -134,7 +152,22 @@ async function Contenido({ params, searchParams }: Props) {
         ) : (
           <div className="space-y-3">
             {confirmados.map((x) => (
-              <Persona key={x.r.id} x={x} />
+              <Persona key={x.r.id} x={x}>
+                {t.estado === "finalizado" && (
+                  <p className="mt-3 flex items-center justify-between border-t border-gris-100 pt-3 text-sm">
+                    <span className="font-semibold tabular-nums">{formatPesos(x.r.montoPagado ?? 0)}</span>
+                    {x.r.pagadoAt ? (
+                      <span className="inline-flex items-center gap-1 font-semibold text-gris">
+                        <CircleCheck className="size-4 text-mp" aria-hidden /> Pagó con Mercado Pago
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 font-semibold text-gris/70">
+                        <Clock className="size-4" aria-hidden /> Pago pendiente
+                      </span>
+                    )}
+                  </p>
+                )}
+              </Persona>
             ))}
           </div>
         )}
@@ -169,6 +202,22 @@ async function Contenido({ params, searchParams }: Props) {
         )}
       </div>
     </main>
+  );
+}
+
+function AlertaCancelaciones({ tardias, total }: { tardias: number; total: number }) {
+  if (tardias === 0) return null;
+  return (
+    <div role="alert" className="mt-3 flex items-start gap-2 rounded-2xl border border-alerta-200 bg-alerta-50 px-3 py-2.5 text-sm text-alerta">
+      <TriangleAlert className="mt-0.5 size-4.5 shrink-0" aria-hidden />
+      <p>
+        <span className="font-bold">Alerta:</span>{" "}
+        {total === 1
+          ? "canceló su último viaje"
+          : `${tardias} de los últimos ${total} viajes ${tardias === 1 ? "lo" : "los"} canceló`}{" "}
+        con menos de {HORAS_CANCELACION} hs de anticipación.
+      </p>
+    </div>
   );
 }
 

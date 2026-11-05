@@ -9,12 +9,13 @@ import { SubmitButton } from "@/components/submit-button";
 import { Card, Field, SectionTitle } from "@/components/ui";
 import { formatPesos, liquidacionConductor } from "@/lib/pricing";
 import { isoFechaAR } from "@/lib/fechas";
+import { MAX_PASAJEROS } from "@/lib/reglas";
 
 export function PublishForm({ conPremio }: { conPremio: boolean }) {
   const [state, action] = useActionState<FormState, FormData>(publicarViaje, {});
   const v = state.values ?? {};
   const [km, setKm] = useState(Number(v.km) || 0);
-  const [capacidad, setCapacidad] = useState(Number(v.capacidad) || 3);
+  const [capacidad, setCapacidad] = useState(Math.min(Number(v.capacidad) || 3, MAX_PASAJEROS));
   const fechaRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (fechaRef.current) fechaRef.current.min = isoFechaAR(new Date());
@@ -61,11 +62,12 @@ export function PublishForm({ conPremio }: { conPremio: boolean }) {
               <Minus className="size-5" />
             </button>
             <span className="font-display text-2xl font-bold tabular-nums text-gris" aria-live="polite">{capacidad}</span>
-            <button type="button" onClick={() => setCapacidad((c) => Math.min(6, c + 1))} aria-label="Sumar un lugar" className="grid size-11 cursor-pointer place-items-center rounded-xl bg-azul text-white disabled:opacity-40" disabled={capacidad >= 6}>
+            <button type="button" onClick={() => setCapacidad((c) => Math.min(MAX_PASAJEROS, c + 1))} aria-label="Sumar un lugar" className="grid size-11 cursor-pointer place-items-center rounded-xl bg-azul text-white disabled:opacity-40" disabled={capacidad >= MAX_PASAJEROS}>
               <Plus className="size-5" />
             </button>
           </div>
           <input type="hidden" name="capacidad" value={capacidad} />
+          <p className="mt-1.5 text-xs text-gris/70">Máximo {MAX_PASAJEROS} pasajeros + vos: 5 integrantes por auto.</p>
         </div>
       </Card>
 

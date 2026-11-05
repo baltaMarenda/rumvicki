@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { Gift, Star, Ticket } from "lucide-react";
+import { CircleCheck, Gift, Star, Ticket, TriangleAlert } from "lucide-react";
 import { db } from "@/db";
 import { ratings, reservations, trips, users } from "@/db/schema";
 import { requerirUsuario } from "@/lib/dal";
@@ -10,6 +10,8 @@ import { formatFecha, formatHora } from "@/lib/fechas";
 import { desgloseParte, formatPesos } from "@/lib/pricing";
 import { cancelarReserva } from "@/app/actions/reservas";
 import { ConfirmButton } from "@/components/confirm-button";
+import { PagarMercadoPago, medioLabel } from "@/components/mercadopago";
+import { HORAS_CANCELACION, esCancelacionTardia } from "@/lib/reglas";
 import { RouteLine } from "@/components/trip-card";
 import { RoleSwitch } from "@/components/role-switch";
 import { Alerta, Avatar, Badge, ButtonLink, EmptyState, PageHeader, PageSkeleton, SectionTitle } from "@/components/ui";
@@ -52,14 +54,17 @@ async function Contenido({ searchParams }: { searchParams: SP }) {
       : [],
   );
 
+  const sinPagar = (x: (typeof lista)[number]) => x.r.estado === "finalizada" && !x.r.pagadoAt;
+  const porPagar = lista.filter(sinPagar);
   const activas = lista.filter((x) => x.r.estado === "pendiente" || x.r.estado === "confirmada").reverse();
-  const historial = lista.filter((x) => !(x.r.estado === "pendiente" || x.r.estado === "confirmada"));
+  const historial = lista.filter((x) => !(x.r.estado === "pendiente" || x.r.estado === "confirmada") && !sinPagar(x));
 
   const Item = ({ x }: { x: (typeof lista)[number] }) => {
     const est = estados[x.r.estado];
     const ocupados = confirmadas.filter((c) => c.tripId === x.t.id).length + (x.r.estado === "pendiente" ? 1 : 0);
     const estimado = desgloseParte(x.t.km, Math.min(Math.max(ocupados, 1), x.t.capacidad), u.premiosDisponibles > 0).aPagar;
     const activa = x.r.estado === "pendiente" || x.r.estado === "confirmada";
+    const tardia = activa && esCancelacionTardia(x.t.fechaHora);
     return (
       <div className="rounded-3xl bg-white p-4 shadow-card">
         <div className="flex items-center justify-between gap-2">
@@ -73,7 +78,7 @@ async function Contenido({ searchParams }: { searchParams: SP }) {
           <div className="shrink-0 text-right">
             {x.r.estado === "finalizada" ? (
               <>
-                <p className="text-xs text-gris/60">Pagaste</p>
+                <p className="text-xs text-gris/60">{x.r.pagadoAt ? "Pagaste" : "A pagar"}</p>
                 <p className="font-display text-lg font-bold tabular-nums">{formatPesos(x.r.montoPagado ?? 0)}</p>
               </>
             ) : (
@@ -93,12 +98,32 @@ async function Contenido({ searchParams }: { searchParams: SP }) {
               <Gift className="size-3.5" aria-hidden /> Sin comisión
             </Badge>
           )}
-          {x.r.tarjetaUltimos4 && activa && <span className="text-xs text-gris/60">•••• {x.r.tarjetaUltimos4}</span>}
+          {x.r.pagadoAt && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-gris/70">
+              <CircleCheck className="size-3.5 text-mp" aria-hidden /> {medioLabel(x.r.medioPago)}
+            </span>
+          )}
+          {x.r.estado === "cancelada" && x.r.cancelacionTardia && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-alerta">
+              <TriangleAlert className="size-3.5" aria-hidden /> Cancelada con menos de {HORAS_CANCELACION} hs
+            </span>
+          )}
         </div>
+        {sinPagar(x) && (
+          <div className="mt-3">
+            <PagarMercadoPago reservaId={x.r.id} monto={x.r.montoPagado ?? 0} concepto={`Viaje ${x.t.origen} → ${x.t.destino}`} />
+          </div>
+        )}
         {activa && (
           <form action={cancelarReserva} className="mt-3">
             <input type="hidden" name="reservaId" value={x.r.id} />
-            <ConfirmButton className="w-full" confirmText="Tocá de nuevo para cancelar">
+            {tardia ? (
+              <p className="mb-2 flex items-start gap-1.5 rounded-xl bg-alerta-50 px-3 py-2 text-xs font-semibold text-alerta">
+                <TriangleAlert className="mt-px size-3.5 shrink-0" aria-hidden />
+                Faltan menos de {HORAS_CANCELACION} hs: si cancelás, los conductores lo van a ver en tus próximas solicitudes.
+              </p>
+            ) : null}
+            <ConfirmButton className="w-full" confirmText={tardia ? "Tocá de nuevo: queda como cancelación tardía" : "Tocá de nuevo para cancelar"}>
               Cancelar reserva
             </ConfirmButton>
           </form>
@@ -118,13 +143,23 @@ async function Contenido({ searchParams }: { searchParams: SP }) {
       <div className="px-5">
         {sp.nueva && (
           <div className="mt-5">
-            <Alerta tono="verde">¡Solicitud enviada! El conductor la va a revisar. El pago quedó retenido (simulado).</Alerta>
+            <Alerta tono="verde">¡Solicitud enviada! El conductor la va a revisar. Pagás con Mercado Pago cuando termine el viaje.</Alerta>
           </div>
         )}
         {sp.calificado && (
           <div className="mt-5">
             <Alerta tono="verde">¡Gracias por calificar!</Alerta>
           </div>
+        )}
+        {porPagar.length > 0 && (
+          <>
+            <SectionTitle>Pagos pendientes</SectionTitle>
+            <div className="stagger space-y-3">
+              {porPagar.map((x) => (
+                <Item key={x.r.id} x={x} />
+              ))}
+            </div>
+          </>
         )}
         <SectionTitle>Activas</SectionTitle>
         {activas.length === 0 ? (
