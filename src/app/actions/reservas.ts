@@ -56,7 +56,9 @@ export async function cancelarReserva(fd: FormData) {
 }
 
 /** Pago simulado con Mercado Pago. Solo se puede pagar una reserva de un viaje ya finalizado. */
-export async function pagarConMercadoPago(_: FormState, fd: FormData): Promise<FormState> {
+export type PagoState = FormState & { operacion?: string; fecha?: string };
+
+export async function pagarConMercadoPago(_: PagoState, fd: FormData): Promise<PagoState> {
   const u = await requerirUsuario();
   const id = Number(fd.get("reservaId"));
   const medio = String(fd.get("medio") ?? "");
@@ -77,6 +79,12 @@ export async function pagarConMercadoPago(_: FormState, fd: FormData): Promise<F
     )
     .returning({ id: reservations.id });
   if (!r) return { error: "Esta reserva no tiene un pago pendiente." };
-  refresh();
-  return { ok: true };
+  // Sin refresh(): si la lista se recarga ahora, la reserva sale de "Pagos pendientes" y se
+  // desmonta el checkout antes de mostrar el comprobante. Se recarga al cerrar el comprobante.
+  const ahora = new Date();
+  return {
+    ok: true,
+    operacion: String(ahora.getTime()).slice(-10),
+    fecha: new Intl.DateTimeFormat("es-AR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Argentina/Buenos_Aires" }).format(ahora),
+  };
 }

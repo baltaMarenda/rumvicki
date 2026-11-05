@@ -19,7 +19,7 @@ import { Alerta, Avatar, Badge, ButtonLink, EmptyState, PageHeader, PageSkeleton
 
 export const metadata: Metadata = { title: "Mis reservas" };
 
-type SP = Promise<{ nueva?: string; calificado?: string }>;
+type SP = Promise<{ nueva?: string; calificado?: string; pagado?: string }>;
 
 const estados = {
   pendiente: { label: "Esperando al conductor", tono: "azul" },
@@ -145,6 +145,14 @@ async function Contenido({ searchParams }: { searchParams: SP }) {
         {sp.nueva && (
           <div className="mt-5">
             <Alerta tono="verde">¡Solicitud enviada! El conductor la va a revisar. Pagás con Mercado Pago cuando termine el viaje.</Alerta>
+          </div>
+        )}
+        {sp.pagado && (
+          <div className="mt-5">
+            <Alerta tono="verde">
+              <p className="font-semibold">¡Pago aprobado con Mercado Pago!</p>
+              <p className="text-white/90">Tu parte del viaje quedó paga. Lo ves en el historial.</p>
+            </Alerta>
           </div>
         )}
         {sp.calificado && (
