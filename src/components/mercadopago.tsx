@@ -3,6 +3,7 @@ import { useActionState, useState } from "react";
 import { CircleCheck, CreditCard, Handshake, Lock, Wallet } from "lucide-react";
 import { pagarConMercadoPago } from "@/app/actions/reservas";
 import { formatPesos } from "@/lib/pricing";
+import { MEDIOS_PAGO, medioLabel } from "@/lib/medios-pago";
 import { cx } from "./ui";
 import { SubmitButton } from "./submit-button";
 import { BottomSheet } from "./bottom-sheet";
@@ -16,13 +17,7 @@ export function MercadoPagoLogo({ className }: { className?: string }) {
   );
 }
 
-const MEDIOS = [
-  { id: "dinero_en_cuenta", icon: Wallet, titulo: "Dinero en cuenta", detalle: "Disponible: $250.000" },
-  { id: "tarjeta_debito", icon: CreditCard, titulo: "Débito Visa", detalle: "•••• 4242" },
-  { id: "tarjeta_credito", icon: CreditCard, titulo: "Crédito Mastercard", detalle: "•••• 5555 · 1 cuota sin interés" },
-] as const;
-
-export const medioLabel = (id: string | null) => MEDIOS.find((m) => m.id === id)?.titulo ?? "Mercado Pago";
+const MEDIOS = MEDIOS_PAGO.map((m) => ({ ...m, icon: m.id === "dinero_en_cuenta" ? Wallet : CreditCard }));
 
 export function PagarMercadoPago({ reservaId, monto, concepto }: { reservaId: number; monto: number; concepto: string }) {
   const [abierto, setAbierto] = useState(false);

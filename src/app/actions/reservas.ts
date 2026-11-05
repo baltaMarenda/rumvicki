@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { reservations, trips } from "@/db/schema";
 import { estaVerificado, requerirUsuario } from "@/lib/dal";
 import { esCancelacionTardia } from "@/lib/reglas";
+import { esMedioPago } from "@/lib/medios-pago";
 import type { FormState } from "./auth";
 
 export async function reservar(_: FormState, fd: FormData): Promise<FormState> {
@@ -54,14 +55,12 @@ export async function cancelarReserva(fd: FormData) {
   refresh();
 }
 
-const MEDIOS = ["dinero_en_cuenta", "tarjeta_debito", "tarjeta_credito"] as const;
-
 /** Pago simulado con Mercado Pago. Solo se puede pagar una reserva de un viaje ya finalizado. */
 export async function pagarConMercadoPago(_: FormState, fd: FormData): Promise<FormState> {
   const u = await requerirUsuario();
   const id = Number(fd.get("reservaId"));
   const medio = String(fd.get("medio") ?? "");
-  if (!MEDIOS.includes(medio as (typeof MEDIOS)[number])) return { error: "Elegí cómo querés pagar." };
+  if (!esMedioPago(medio)) return { error: "Elegí cómo querés pagar." };
 
   // Simula la demora de la pasarela.
   await new Promise((r) => setTimeout(r, 1200));
