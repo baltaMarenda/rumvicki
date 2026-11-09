@@ -39,7 +39,7 @@ export function PriceSimulator({
         <div className="rounded-2xl bg-azul px-3 py-2 text-right text-white">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-white/85">Total</p>
           <p className="font-display text-lg font-bold tabular-nums">{formatPesos(precioTotal(km))}</p>
-          <p className="text-[11px] font-medium text-white/85">{km} km × $300</p>
+          <p className="text-[11px] font-medium text-white/85">{km} km × $280</p>
         </div>
       </div>
 

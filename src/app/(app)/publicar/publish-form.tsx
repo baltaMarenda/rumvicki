@@ -37,7 +37,7 @@ export function PublishForm({ conPremio }: { conPremio: boolean }) {
             <input id="hora" name="hora" type="time" className="input" defaultValue={v.hora} required />
           </Field>
         </div>
-        <Field label="Distancia del recorrido" htmlFor="km" hint="Mirá los km en tu app de mapas. Se cobran $300 por km.">
+        <Field label="Distancia del recorrido" htmlFor="km" hint="Mirá los km en tu app de mapas. Se cobran $280 por km.">
           <div className="relative">
             <input
               id="km"

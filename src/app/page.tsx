@@ -13,7 +13,7 @@ async function RedirigirSiLogueado() {
 }
 
 const features = [
-  { icon: Wallet, title: "Pagá lo justo", text: "$300 por km, dividido entre todos los que viajan." },
+  { icon: Wallet, title: "Pagá lo justo", text: "$280 por km, dividido entre todos los que viajan." },
   { icon: BadgeCheck, title: "Gente verificada", text: "DNI y antecedentes penales validados antes de viajar." },
   { icon: Gauge, title: "Sumá km, ganá premios", text: "Cada 800 km te regalamos un viaje sin comisión." },
 ];

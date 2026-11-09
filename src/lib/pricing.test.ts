@@ -3,29 +3,29 @@ import { desgloseParte, liquidacionConductor, precioPorPersona, precioTotal } fr
 import { nivelKm, premiosNuevos } from "./rewards";
 
 describe("pricing", () => {
-  it("calcula $300 por km", () => {
-    expect(precioTotal(100)).toBe(30000);
+  it("calcula $280 por km", () => {
+    expect(precioTotal(150)).toBe(42000);
   });
   it("divide entre conductor y pasajeros", () => {
-    expect(precioPorPersona(100, 1)).toBe(15000);
-    expect(precioPorPersona(100, 2)).toBe(10000);
-    expect(precioPorPersona(100, 3)).toBe(7500);
+    expect(precioPorPersona(150, 1)).toBe(21000);
+    expect(precioPorPersona(150, 2)).toBe(14000);
+    expect(precioPorPersona(150, 3)).toBe(10500);
   });
   it("desglosa la comisión del 10%", () => {
-    expect(desgloseParte(100, 2)).toEqual({ parte: 10000, costoViaje: 9000, comision: 1000, aPagar: 10000 });
-    expect(desgloseParte(100, 2, true)).toEqual({ parte: 10000, costoViaje: 9000, comision: 0, aPagar: 9000 });
+    expect(desgloseParte(150, 2)).toEqual({ parte: 14000, costoViaje: 12600, comision: 1400, aPagar: 14000 });
+    expect(desgloseParte(150, 2, true)).toEqual({ parte: 14000, costoViaje: 12600, comision: 0, aPagar: 12600 });
   });
   it("liquida al conductor: Yendo se queda con el 10% del total", () => {
-    const l = liquidacionConductor(100, [false, false]);
-    expect(l.cobrado).toBe(20000);
-    expect(l.comisionYendo).toBe(3000);
-    expect(l.recibe).toBe(17000);
+    const l = liquidacionConductor(150, [false, false]);
+    expect(l.cobrado).toBe(28000);
+    expect(l.comisionYendo).toBe(4200);
+    expect(l.recibe).toBe(23800);
   });
   it("respeta premios", () => {
-    const l = liquidacionConductor(100, [true, false], true);
-    expect(l.cobrado).toBe(19000);
-    expect(l.comisionYendo).toBe(1000);
-    expect(l.recibe).toBe(18000);
+    const l = liquidacionConductor(150, [true, false], true);
+    expect(l.cobrado).toBe(26600);
+    expect(l.comisionYendo).toBe(1400);
+    expect(l.recibe).toBe(25200);
   });
 });
 

@@ -1,4 +1,4 @@
-export const PRECIO_KM = 300;
+export const PRECIO_KM = 280;
 export const COMISION = 0.1;
 
 /** Precio total del viaje (sin peajes). */
