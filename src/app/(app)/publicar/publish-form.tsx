@@ -7,7 +7,7 @@ import { LocalidadSelect } from "@/components/localidad-select";
 import { PriceSimulator } from "@/components/price-simulator";
 import { SubmitButton } from "@/components/submit-button";
 import { Card, Field, SectionTitle } from "@/components/ui";
-import { formatPesos, liquidacionConductor } from "@/lib/pricing";
+import { COMISION_PCT, formatPesos, liquidacionConductor } from "@/lib/pricing";
 import { isoFechaAR } from "@/lib/fechas";
 import { MAX_PASAJEROS } from "@/lib/reglas";
 
@@ -78,7 +78,7 @@ export function PublishForm({ conPremio }: { conPremio: boolean }) {
           <div className="mt-3 flex items-center justify-between rounded-3xl bg-verde px-5 py-4 text-white">
             <div>
               <p className="text-sm font-semibold text-white/95">Si se completa el auto, recibís</p>
-              <p className="text-xs text-white/90">Ya descontada la comisión de Yendo (10% de cada parte)</p>
+              <p className="text-xs text-white/90">Ya descontada la comisión de Yendo ({COMISION_PCT}% de cada parte)</p>
             </div>
             <p className="font-display text-2xl font-bold tabular-nums">{formatPesos(liq.recibe)}</p>
           </div>

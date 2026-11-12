@@ -50,16 +50,16 @@ async function main() {
   const pago = (dias: number, medio = "dinero_en_cuenta") => ({ pagadoAt: new Date(Date.now() + dias * dia), medioPago: medio });
   const tarde = (dias: number) => ({ estado: "cancelada" as const, canceladaAt: new Date(Date.now() + dias * dia), cancelacionTardia: true });
   await db.insert(s.reservations).values([
-    { tripId: p1, pasajeroId: sofia, estado: "finalizada", montoPagado: 34533, comision: 3453, ...pago(-20) },
-    { tripId: p1, pasajeroId: diego, estado: "finalizada", montoPagado: 34533, comision: 3453, ...pago(-20, "tarjeta_debito") },
+    { tripId: p1, pasajeroId: sofia, estado: "finalizada", montoPagado: 34533, comision: 691, ...pago(-20) },
+    { tripId: p1, pasajeroId: diego, estado: "finalizada", montoPagado: 34533, comision: 691, ...pago(-20, "tarjeta_debito") },
     { tripId: p1, pasajeroId: juan, ...tarde(-20.2) },
-    { tripId: p2, pasajeroId: sofia, estado: "finalizada", montoPagado: 33600, comision: 3360, ...pago(-12) },
-    { tripId: p2, pasajeroId: juan, estado: "finalizada", montoPagado: 33600, comision: 3360, ...pago(-12, "tarjeta_credito") },
-    { tripId: p3, pasajeroId: diego, estado: "finalizada", montoPagado: 22400, comision: 2240, ...pago(-6) },
+    { tripId: p2, pasajeroId: sofia, estado: "finalizada", montoPagado: 33600, comision: 672, ...pago(-12) },
+    { tripId: p2, pasajeroId: juan, estado: "finalizada", montoPagado: 33600, comision: 672, ...pago(-12, "tarjeta_credito") },
+    { tripId: p3, pasajeroId: diego, estado: "finalizada", montoPagado: 22400, comision: 448, ...pago(-6) },
     { tripId: p3, pasajeroId: juan, ...tarde(-6.3) },
-    { tripId: p4, pasajeroId: juan, estado: "finalizada", montoPagado: 11900, comision: 1190, ...pago(-4) },
+    { tripId: p4, pasajeroId: juan, estado: "finalizada", montoPagado: 11900, comision: 238, ...pago(-4) },
     // Sofía todavía no pagó este viaje: sirve para mostrar el botón de Mercado Pago.
-    { tripId: p5, pasajeroId: sofia, estado: "finalizada", montoPagado: 4200, comision: 420 },
+    { tripId: p5, pasajeroId: sofia, estado: "finalizada", montoPagado: 4200, comision: 84 },
     { tripId: p5, pasajeroId: juan, ...tarde(-1.2) },
   ]);
   await db.insert(s.ratings).values([

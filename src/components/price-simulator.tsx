@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Gift, UsersRound } from "lucide-react";
-import { desgloseParte, formatPesos, precioPorPersona, precioTotal } from "@/lib/pricing";
+import { COMISION_PCT, desgloseParte, formatPesos, precioPorPersona, precioTotal } from "@/lib/pricing";
 import { cx } from "./ui";
 
 export function PriceSimulator({
@@ -96,11 +96,11 @@ export function PriceSimulator({
       {!compacto && (
         <dl className="mt-5 space-y-2 border-t border-dashed border-gris-200 pt-4 text-sm">
           <div className="flex justify-between">
-            <dt className="text-gris/80">Costo del viaje (90%)</dt>
+            <dt className="text-gris/80">Costo del viaje ({100 - COMISION_PCT}%)</dt>
             <dd className="font-semibold tabular-nums">{formatPesos(d.costoViaje)}</dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-gris/80">Comisión Yendo (10%)</dt>
+            <dt className="text-gris/80">Comisión Yendo ({COMISION_PCT}%)</dt>
             <dd className={cx("font-semibold tabular-nums", conPremio && "line-through decoration-2")}>
               {formatPesos(desgloseParte(km, n).comision)}
             </dd>

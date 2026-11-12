@@ -1,5 +1,7 @@
 export const PRECIO_KM = 280;
-export const COMISION = 0.1;
+export const COMISION = 0.02;
+/** Comisión en porcentaje entero, para mostrar en la UI. */
+export const COMISION_PCT = Math.round(COMISION * 100);
 
 /** Precio total del viaje (sin peajes). */
 export function precioTotal(km: number) {
@@ -12,13 +14,13 @@ export function precioPorPersona(km: number, pasajeros: number) {
   return Math.round(precioTotal(km) / integrantes);
 }
 
-/** 10% de la parte de un integrante. */
+/** 2% de la parte de un integrante. */
 export const comisionDe = (parte: number) => Math.round(parte * COMISION);
 
 /**
  * Desglose de la parte de un integrante.
- * De cada parte, el 10% es comisión de Yendo y el 90% cubre el viaje.
- * Con el premio de km, el integrante no paga ese 10%.
+ * De cada parte, el 2% es comisión de Yendo y el 98% cubre el viaje.
+ * Con el premio de km, el integrante no paga ese 2%.
  */
 export function desgloseParte(km: number, pasajeros: number, usaPremio = false) {
   const parte = precioPorPersona(km, pasajeros);
@@ -33,7 +35,7 @@ export function desgloseParte(km: number, pasajeros: number, usaPremio = false) 
 
 /**
  * Liquidación del conductor. Cada pasajero aporta su parte; al conductor le llega
- * el 90% de cada una. Además, Yendo cobra el 10% de la parte del propio conductor
+ * el 98% de cada una. Además, Yendo cobra el 2% de la parte del propio conductor
  * (salvo que use su premio).
  */
 export function liquidacionConductor(

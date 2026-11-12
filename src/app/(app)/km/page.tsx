@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { reservations, trips } from "@/db/schema";
 import { requerirUsuario } from "@/lib/dal";
 import { TRAMO_KM, nivelKm } from "@/lib/rewards";
+import { COMISION_PCT } from "@/lib/pricing";
 import { KmProgress } from "@/components/km-progress";
 import { Card, PageSkeleton, SectionTitle, cx } from "@/components/ui";
 
@@ -34,7 +35,7 @@ async function Contenido() {
           <KmProgress km={u.kmTotales} />
         </div>
         <p className="relative mt-4 text-sm font-medium text-white/95">
-          Cada {TRAMO_KM} km desbloqueás un viaje <strong>sin la comisión del 10%</strong>.
+          Cada {TRAMO_KM} km desbloqueás un viaje <strong>sin la comisión del {COMISION_PCT}%</strong>.
         </p>
       </header>
 
